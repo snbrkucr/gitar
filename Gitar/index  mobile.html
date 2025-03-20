@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Klasik Gitar Bölümlerini Eşleştirme Oyunu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            text-align: center;
+            background: linear-gradient(135deg, #1a1a1a, #2c2c2c);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background-image: url('empty-blackboard.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            position: relative;
+            overflow: auto; /* Kaydırmayı geri getiriyoruz */
+            -webkit-user-select: none; /* Prevent text selection on mobile */
+            user-select: none;
+            touch-action: none; /* Prevent default touch behaviors like scrolling while dragging */
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: -1;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 25px;
+            color: #f0f0f0;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7);
+            letter-spacing: 1px;
+            animation: fadeIn 1s ease-in-out;
+            position: relative; /* Scroll ile hareket etmesin, tepede sabit kalsın */
+            background: rgba(255, 255, 255, 0.1); /* Şeffaf arka plan */
+            padding: 10px 20px;
+            border-radius: 15px;
+            z-index: 10;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(-20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        #game-container {
+            position: relative;
+            display: inline-block;
+            margin: 20px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        #game-container:hover {
+            transform: scale(1.01);
+        }
+
+        #game-image {
+            display: block;
+            max-width: none;
+            height: auto;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .drop-box {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 2px dashed #00ddeb;
+            cursor: pointer;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .drop-box:hover {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-color: #00b7c2;
+            transform: scale(1.1);
+        }
+
+        .draggable {
+            display: block; /* Alt alta yerleştirme için */
+            padding: 8px 16px; /* Daha küçük padding */
+            margin: 4px 0; /* Daha küçük dikey boşluk */
+            background: linear-gradient(45deg, #00ddeb, #00b7c2);
+            color: #ffffff;
+            border: none;
+            cursor: grab;
+            border-radius: 15px; /* Daha küçük yuvarlak kenarlar */
+            font-size: 0.9rem; /* Daha küçük font boyutu */
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3); /* Daha küçük gölge */
+            text-align: center;
+            position: relative; /* For touch dragging */
+            z-index: 20; /* Ensure draggable items are above other elements */
+        }
+
+        .draggable:hover {
+            transform: translateX(-5px) scale(1.05); /* Yatay hareket efekti */
+            background: linear-gradient(45deg, #00b7c2, #00ddeb);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .draggable:active {
+            transform: translateX(0);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        #score-container {
+            font-size: 1.5rem;
+            font-weight: 600;
+            position: fixed; /* Scroll ile hareket etmesi için */
+            top: 80px; /* Başlıktan sonra yerleştiriyoruz */
+            left: 20px;
+            background: rgba(255, 255, 255, 0.1); /* Şeffaf arka plan */
+            padding: 12px 24px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        #score-container.congrats {
+            background: linear-gradient(45deg, #28a745, #218838);
+            animation: pulse 1s infinite;
+        }
+
+        #score-container.game-over {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        #mistakes-container {
+            font-size: 1.5rem;
+            font-weight: 600;
+            position: fixed; /* Scroll ile hareket etmesi için */
+            top: 160px; /* Puan ile arasına daha fazla mesafe koyuyoruz */
+            left: 20px;
+            background: rgba(255, 255, 255, 0.1); /* Şeffaf arka plan */
+            padding: 12px 24px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+            z-index: 10;
+        }
+
+        #word-container {
+            display: flex;
+            flex-direction: column; /* Kelimeleri alt alta yerleştir */
+            align-items: center;
+            gap: 4px; /* Daha küçük boşluk */
+            background: rgba(255, 255, 255, 0.1); /* Şeffaf arka plan */
+            padding: 10px;
+            border-radius: 15px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+            position: fixed; /* Scroll ile hareket etmesi için */
+            top: 140px; /* Sürenin altına yerleştiriyoruz */
+            right: 20px; /* Sağ köşeye hizala */
+            width: 180px; /* Genişliği biraz küçülttük */
+            max-height: 70vh; /* Ekran yüksekliğinin %70'i kadar maksimum yükseklik */
+            overflow-y: auto; /* Dikey kaydırma çubuğu ekle */
+            z-index: 10;
+        }
+
+        /* Kaydırma çubuğu stilini özelleştirme */
+        #word-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #word-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        #word-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+
+        #word-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        #button-container {
+            position: fixed; /* Scroll ile hareket etmesi için */
+            top: 260px; /* Hata'dan sonra yerleştiriyoruz */
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 10;
+        }
+
+        #reset-button, #hint-button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 30px;
+            color: #ffffff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(45deg, #ff6b6b, #ee5253); /* Şeffaf arka plan için */
+        }
+
+        #reset-button::before, #hint-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: all 0.5s ease;
+        }
+
+        #reset-button:hover::before, #hint-button:hover::before {
+            left: 100%;
+        }
+
+        #reset-button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5253);
+        }
+
+        #reset-button:hover {
+            transform: translateY(-5px);
+            background: linear-gradient(45deg, #ee5253, #ff6b6b);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        #reset-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        #hint-button {
+            background: linear-gradient(45deg, #ffd700, #ffaa00);
+        }
+
+        #hint-button:hover {
+            transform: translateY(-5px);
+            background: linear-gradient(45deg, #ffaa00, #ffd700);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        #hint-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        #timer-container {
+            font-size: 1.5rem;
+            font-weight: 600;
+            position: fixed; /* Scroll ile hareket etmesi için */
+            top: 80px; /* Başlıktan sonra yerleştiriyoruz */
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1); /* Şeffaf arka plan */
+            padding: 12px 24px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+            z-index: 10;
+        }
+
+        #hint-image {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 80%;
+            max-height: 80%;
+            display: none;
+            z-index: 1000;
+            border-radius: 15px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        #confetti {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: none;
+            z-index: 1000;
+        }
+
+        .confetti-piece {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            opacity: 0.8;
+            animation: fall 4s linear infinite;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 0.8; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 1.8rem; /* Başlık boyutunu küçült */
+                padding: 8px 16px;
+            }
+
+            #game-container {
+                padding: 15px;
+                transform: scale(0.8); /* Oyunu biraz küçült */
+                transform-origin: top center;
+            }
+
+            #game-image {
+                max-width: 100%;
+                height: auto;
+            }
+
+            .drop-box {
+                width: 30px;
+                height: 30px;
+            }
+
+            #score-container, #mistakes-container, #timer-container {
+                font-size: 1.2rem;
+                padding: 8px 16px;
+            }
+
+            #score-container {
+                top: 60px;
+                left: 10px;
+            }
+
+            #mistakes-container {
+                top: 120px;
+                left: 10px;
+            }
+
+            #timer-container {
+                top: 60px;
+                right: 10px;
+            }
+
+            #word-container {
+                top: 120px;
+                right: 10px;
+                width: 140px;
+                max-height: 60vh;
+            }
+
+            .draggable {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+                border-radius: 12px;
+            }
+
+            #button-container {
+                top: 200px;
+                left: 10px;
+                gap: 10px;
+            }
+
+            #reset-button, #hint-button {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5rem;
+                padding: 6px 12px;
+            }
+
+            #game-container {
+                transform: scale(0.6);
+            }
+
+            #score-container, #mistakes-container, #timer-container {
+                font-size: 1rem;
+                padding: 6px 12px;
+            }
+
+            #word-container {
+                width: 120px;
+            }
+
+            .draggable {
+                padding: 5px 10px;
+                font-size: 0.7rem;
+                border-radius: 10px;
+            }
+
+            #button-container {
+                top: 180px;
+            }
+
+            #reset-button, #hint-button {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Klasik Gitar Bölümlerini Eşleştirme Oyunu</h1>
+    <div id="score-container">Puan: <span id="score">0</span></div>
+    <div id="mistakes-container">Hata: <span id="mistakes">0</span>/3</div>
+    <div id="button-container">
+        <button id="reset-button">Oyunu Sıfırla</button>
+        <button id="hint-button">İpucu Al</button>
+    </div>
+    <div id="timer-container">Süre: <span id="timer">00:00</span></div>
+    <div id="word-container">
+        <div class="draggable" draggable="true">Kafa</div>
+        <div class="draggable" draggable="true">Üst Eşik</div>
+        <div class="draggable" draggable="true">Perdeler</div>
+        <div class="draggable" draggable="true">Perde Demirleri</div>
+        <div class="draggable" draggable="true">Klavye</div>
+        <div class="draggable" draggable="true">Akort Burguları</div>
+        <div class="draggable" draggable="true">Sap</div>
+        <div class="draggable" draggable="true">Ses Deliği</div>
+        <div class="draggable" draggable="true">Alt Eşik</div>
+        <div class="draggable" draggable="true">Gövde</div>
+    </div>
+    <div id="game-container">
+        <img id="game-image" src="klasik-gitarin-bolumleri-2 copy 2.jpg" alt="Gitarın Bölümleri">
+        <div class="drop-box" data-word="Kafa" style="top: 268px; left: 681px;"></div>
+        <div class="drop-box" data-word="Üst Eşik" style="top: 363px; left: 739px;"></div>
+        <div class="drop-box" data-word="Perdeler" style="top: 500px; left: 676px;"></div>
+        <div class="drop-box" data-word="Perde Demirleri" style="top: 617px; left: 666px;"></div>
+        <div class="drop-box" data-word="Klavye" style="top: 544px; left: 494px;"></div>
+        <div class="drop-box" data-word="Akort Burguları" style="top: 276px; left: 488px;"></div>
+        <div class="drop-box" data-word="Sap" style="top: 439px; left: 393px;"></div>
+        <div class="drop-box" data-word="Ses Deliği" style="top: 917px; left: 789px;"></div>
+        <div class="drop-box" data-word="Alt Eşik" style="top: 1126px; left: 837px;"></div>
+        <div class="drop-box" data-word="Gövde" style="top: 1023px; left: 291px;"></div>
+    </div>
+    <img id="hint-image" src="gitarin-yapisi.jpg" alt="Gitarın Yapısı">
+    <div id="confetti">
+        <div class="confetti-piece" style="left: 5%; background: #ff4d4d; animation-delay: 0s;"></div>
+        <div class="confetti-piece" style="left: 10%; background: #4dff4d; animation-delay: 0.1s;"></div>
+        <div class="confetti-piece" style="left: 15%; background: #4d4dff; animation-delay: 0.2s;"></div>
+        <div class="confetti-piece" style="left: 20%; background: #ffff4d; animation-delay: 0.3s;"></div>
+        <div class="confetti-piece" style="left: 25%; background: #ff4dff; animation-delay: 0.4s;"></div>
+        <div class="confetti-piece" style="left: 30%; background: #4dffff; animation-delay: 0.5s;"></div>
+        <div class="confetti-piece" style="left: 35%; background: #ff944d; animation-delay: 0.6s;"></div>
+        <div class="confetti-piece" style="left: 40%; background: #944dff; animation-delay: 0.7s;"></div>
+        <div class="confetti-piece" style="left: 45%; background: #ff4d94; animation-delay: 0.8s;"></div>
+        <div class="confetti-piece" style="left: 50%; background: #ff4d4d; animation-delay: 0.9s;"></div>
+        <div class="confetti-piece" style="left: 55%; background: #4dff4d; animation-delay: 1s;"></div>
+        <div class="confetti-piece" style="left: 60%; background: #4d4dff; animation-delay: 1.1s;"></div>
+        <div class="confetti-piece" style="left: 65%; background: #ffff4d; animation-delay: 1.2s;"></div>
+        <div class="confetti-piece" style="left: 70%; background: #ff4dff; animation-delay: 1.3s;"></div>
+        <div class="confetti-piece" style="left: 75%; background: #4dffff; animation-delay: 1.4s;"></div>
+        <div class="confetti-piece" style="left: 80%; background: #ff944d; animation-delay: 1.5s;"></div>
+        <div class="confetti-piece" style="left: 85%; background: #944dff; animation-delay: 1.6s;"></div>
+        <div class="confetti-piece" style="left: 90%; background: #ff4d94; animation-delay: 1.7s;"></div>
+        <div class="confetti-piece" style="left: 95%; background: #ff4d4d; animation-delay: 1.8s;"></div>
+    </div>
+    <audio id="correct-sound" src="correct-sound.mp3"></audio>
+    <audio id="incorrect-sound" src="incorrect-sound.mp3"></audio>
+    <script>
+        let score = 0;
+        let seconds = 0;
+        let timerInterval = null;
+        let timerStarted = false;
+        let mistakes = 0;
+        let gameOver = false;
+        const initialWords = ['Kafa', 'Üst Eşik', 'Perdeler', 'Perde Demirleri', 'Klavye', 'Akort Burguları', 'Sap', 'Ses Deliği', 'Alt Eşik', 'Gövde'];
+
+        // Timer function
+        function startTimer() {
+            if (!timerStarted && !gameOver) {
+                timerStarted = true;
+                timerInterval = setInterval(() => {
+                    seconds++;
+                    let mins = Math.floor(seconds / 60);
+                    let secs = seconds % 60;
+                    document.getElementById('timer').textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                }, 1000);
+            }
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerStarted = false;
+            }
+        }
+
+        // Function to initialize the game
+        function initializeGame() {
+            const draggables = document.querySelectorAll('.draggable');
+            const dropBoxes = document.querySelectorAll('.drop-box');
+            let draggedElement = null;
+            let touchOffsetX = 0;
+            let touchOffsetY = 0;
+
+            // Desktop Drag-and-Drop
+            draggables.forEach(draggable => {
+                draggable.addEventListener('dragstart', function(event) {
+                    draggedElement = event.target;
+                    event.dataTransfer.setData('text', event.target.textContent);
+                });
+
+                // Touch Events for Mobile
+                draggable.addEventListener('touchstart', function(event) {
+                    if (gameOver) return;
+                    event.preventDefault();
+                    draggedElement = event.target;
+                    const touch = event.touches[0];
+                    touchOffsetX = touch.clientX - draggedElement.getBoundingClientRect().left;
+                    touchOffsetY = touch.clientY - draggedElement.getBoundingClientRect().top;
+                    draggedElement.style.position = 'fixed';
+                    draggedElement.style.zIndex = 1000;
+                    draggedElement.style.opacity = 0.8;
+                    moveElement(touch.clientX, touch.clientY);
+                });
+
+                draggable.addEventListener('touchmove', function(event) {
+                    if (gameOver) return;
+                    event.preventDefault();
+                    const touch = event.touches[0];
+                    moveElement(touch.clientX, touch.clientY);
+                });
+
+                draggable.addEventListener('touchend', function(event) {
+                    if (gameOver) return;
+                    event.preventDefault();
+                    const touch = event.changedTouches[0];
+                    const dropTarget = findDropTarget(touch.clientX, touch.clientY);
+                    if (dropTarget) {
+                        handleDrop(draggedElement, dropTarget);
+                    }
+                    // Reset the dragged element's position
+                    draggedElement.style.position = 'relative';
+                    draggedElement.style.left = '';
+                    draggedElement.style.top = '';
+                    draggedElement.style.opacity = 1;
+                    draggedElement.style.zIndex = 20;
+                    draggedElement = null;
+                });
+            });
+
+            function moveElement(clientX, clientY) {
+                if (draggedElement) {
+                    draggedElement.style.left = (clientX - touchOffsetX) + 'px';
+                    draggedElement.style.top = (clientY - touchOffsetY) + 'px';
+                }
+            }
+
+            function findDropTarget(x, y) {
+                const dropBoxes = document.querySelectorAll('.drop-box');
+                for (let box of dropBoxes) {
+                    const rect = box.getBoundingClientRect();
+                    if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                        return box;
+                    }
+                }
+                return null;
+            }
+
+            function handleDrop(draggedElement, dropTarget) {
+                const droppedText = draggedElement.textContent;
+                if (droppedText === dropTarget.getAttribute('data-word')) {
+                    document.getElementById('correct-sound').play();
+                    score++;
+                    document.getElementById('score').textContent = score;
+                    dropTarget.style.backgroundColor = 'lightgreen';
+                    draggedElement.remove();
+                    if (score === 1) {
+                        startTimer();
+                    }
+                    if (score === 10) {
+                        document.getElementById('score-container').textContent = "Tebrikler";
+                        document.getElementById('score-container').classList.add('congrats');
+                        document.getElementById('confetti').style.display = 'block';
+                        stopTimer();
+                        gameOver = true;
+                    }
+                } else {
+                    document.getElementById('incorrect-sound').play();
+                    mistakes++;
+                    document.getElementById('mistakes').textContent = mistakes;
+                    if (mistakes >= 3) {
+                        document.getElementById('score-container').textContent = "Kaybettiniz";
+                        document.getElementById('score-container').classList.add('game-over');
+                        stopTimer();
+                        gameOver = true;
+                        document.querySelectorAll('.draggable').forEach(item => {
+                            item.draggable = false;
+                            item.style.cursor = 'not-allowed';
+                        });
+                    }
+                }
+            }
+
+            // Desktop Drop Events
+            dropBoxes.forEach(box => {
+                box.addEventListener('dragover', function(event) {
+                    if (!gameOver) {
+                        event.preventDefault();
+                    }
+                });
+
+                box.addEventListener('drop', function(event) {
+                    if (gameOver) return;
+                    event.preventDefault();
+                    const droppedText = event.dataTransfer.getData('text');
+                    if (droppedText === box.getAttribute('data-word')) {
+                        document.getElementById('correct-sound').play();
+                        score++;
+                        document.getElementById('score').textContent = score;
+                        event.target.style.backgroundColor = 'lightgreen';
+                        document.querySelectorAll('.draggable').forEach(item => {
+                            if (item.textContent === droppedText) {
+                                item.remove();
+                            }
+                        });
+                        if (score === 1) {
+                            startTimer();
+                        }
+                        if (score === 10) {
+                            document.getElementById('score-container').textContent = "Tebrikler";
+                            document.getElementById('score-container').classList.add('congrats');
+                            document.getElementById('confetti').style.display = 'block';
+                            stopTimer();
+                            gameOver = true;
+                        }
+                    } else {
+                        document.getElementById('incorrect-sound').play();
+                        mistakes++;
+                        document.getElementById('mistakes').textContent = mistakes;
+                        if (mistakes >= 3) {
+                            document.getElementById('score-container').textContent = "Kaybettiniz";
+                            document.getElementById('score-container').classList.add('game-over');
+                            stopTimer();
+                            gameOver = true;
+                            document.querySelectorAll('.draggable').forEach(item => {
+                                item.draggable = false;
+                                item.style.cursor = 'not-allowed';
+                            });
+                        }
+                    }
+                });
+            });
+        }
+
+        // Initialize the game on page load
+        initializeGame();
+
+        // Hint button functionality
+        document.getElementById('hint-button').addEventListener('click', () => {
+            if (gameOver) return;
+            const hintImage = document.getElementById('hint-image');
+            hintImage.style.display = 'block';
+            setTimeout(() => {
+                hintImage.style.display = 'none';
+            }, 3000);
+        });
+
+        // Reset button functionality
+        document.getElementById('reset-button').addEventListener('click', () => {
+            location.reload();
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'92378df3dbc3dac1',t:'MTc0MjQ5ODI5Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
+
+
+
+
+
+
+
+
+
+
