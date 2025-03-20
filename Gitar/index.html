@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Klasik Gitar Bölümleri Eşleştirme Oyunu</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-image: url('empty-blackboard.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            color: white;
+        }
+        #game-container {
+            position: relative;
+            display: inline-block;
+        }
+        #game-image {
+            display: block;
+            max-width: none;
+            height: auto;
+        }
+        .drop-box {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 2px dashed #000;
+            cursor: pointer;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+        }
+        .draggable {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 5px;
+            background-color: lightblue;
+            border: 1px solid #000;
+            cursor: grab;
+            border-radius: 50%;
+        }
+        #score-container {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 10px;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            transform: none;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Klasik Gitar Bölümleri Eşleştirme Oyunu</h1>
+    <div id="score-container">Puan: <span id="score">0</span></div>
+    <div id="word-container">
+        <div class="draggable" draggable="true">Kafa</div>
+        <div class="draggable" draggable="true">Üst Eşik</div>
+        <div class="draggable" draggable="true">Perdeler</div>
+        <div class="draggable" draggable="true">Perde Demirleri</div>
+        <div class="draggable" draggable="true">Klavye</div>
+        <div class="draggable" draggable="true">Akort Burguları</div>
+        <div class="draggable" draggable="true">Sap</div>
+        <div class="draggable" draggable="true">Ses Deliği</div>
+        <div class="draggable" draggable="true">Alt Eşik</div>
+        <div class="draggable" draggable="true">Gövde</div>
+    </div>
+    <div id="game-container">
+        <img id="game-image" src="klasik-gitarin-bolumleri-2 copy 2.jpg" alt="Gitarın Bölümleri">
+        <div class="drop-box" data-word="Kafa" style="top: 268px; left: 681px;"></div>
+        <div class="drop-box" data-word="Üst Eşik" style="top: 363px; left: 739px;"></div>
+        <div class="drop-box" data-word="Perdeler" style="top: 460px; left: 676px;"></div>
+        <div class="drop-box" data-word="Perde Demirleri" style="top: 617px; left: 666px;"></div>
+        <div class="drop-box" data-word="Klavye" style="top: 544px; left: 494px;"></div>
+        <div class="drop-box" data-word="Akort Burguları" style="top: 276px; left: 488px;"></div>
+        <div class="drop-box" data-word="Sap" style="top: 439px; left: 393px;"></div>
+        <div class="drop-box" data-word="Ses Deliği" style="top: 917px; left: 789px;"></div>
+        <div class="drop-box" data-word="Alt Eşik" style="top: 1126px; left: 837px;"></div>
+        <div class="drop-box" data-word="Gövde" style="top: 1023px; left: 291px;"></div>
+    </div>
+    <audio id="correct-sound" src="correct-sound.mp3"></audio>
+    <audio id="incorrect-sound" src="incorrect-sound.mp3"></audio>
+    <script>
+        let score = 0;
+        const draggables = document.querySelectorAll('.draggable');
+        const dropBoxes = document.querySelectorAll('.drop-box');
+        
+        draggables.forEach(draggable => {
+            draggable.addEventListener('dragstart', function(event) {
+                event.dataTransfer.setData('text', event.target.textContent);
+            });
+        });
+        
+        dropBoxes.forEach(box => {
+            box.addEventListener('dragover', function(event) {
+                event.preventDefault();
+            });
+            
+            box.addEventListener('drop', function(event) {
+                event.preventDefault();
+                const droppedText = event.dataTransfer.getData('text');
+                if (droppedText === box.getAttribute('data-word')) {
+                    document.getElementById('correct-sound').play();
+                    score++;
+                    document.getElementById('score').textContent = score;
+                    event.target.style.backgroundColor = 'lightgreen';
+                    document.querySelectorAll('.draggable').forEach(item => {
+                        if (item.textContent === droppedText) {
+                            item.remove();
+                        }
+                    });
+                    if (score === 10) {
+                        document.getElementById('score-container').textContent = "Tebrikler";
+                    }
+                } else {
+                    document.getElementById('incorrect-sound').play();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
